@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { getStudentById, Student } from '@/lib/db';
+import { StudentQRCode } from '@/components/ui/StudentQRCode';
 import {
   ArrowLeft,
   Edit,
-  Trash2,
   Mail,
   Phone,
   MapPin,
@@ -22,6 +22,7 @@ export default function ViewStudent() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     loadStudent();
@@ -84,6 +85,13 @@ export default function ViewStudent() {
           </div>
           
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowQRCode(true)}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <QrCode className="w-4 h-4" />
+              View QR
+            </button>
             <Link
               to={`/admin/students/${student.id}/edit`}
               className="btn-secondary flex items-center gap-2"
@@ -129,10 +137,13 @@ export default function ViewStudent() {
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2">
-                    <QrCode className="w-16 h-16 text-muted-foreground" />
-                  </div>
+                <div className="flex flex-col items-center gap-2">
+                  <button 
+                    onClick={() => setShowQRCode(true)}
+                    className="p-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors cursor-pointer"
+                  >
+                    <QrCode className="w-16 h-16 text-foreground" />
+                  </button>
                   <p className="text-xs text-muted-foreground">{student.registrationNumber}</p>
                 </div>
               </div>
@@ -297,6 +308,18 @@ export default function ViewStudent() {
           </div>
         )}
       </div>
+
+      <StudentQRCode
+        open={showQRCode}
+        onOpenChange={setShowQRCode}
+        studentData={{
+          fullName: student.fullName,
+          rollNumber: student.rollNumber,
+          registrationNumber: student.registrationNumber,
+          class: student.class,
+          semester: student.semester,
+        }}
+      />
     </AdminLayout>
   );
 }

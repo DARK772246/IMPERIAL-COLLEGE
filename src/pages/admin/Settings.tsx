@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTheme } from '@/contexts/ThemeContext';
-import { processSyncQueue } from '@/lib/db';
+import { useAuth } from '@/contexts/AuthContext';
+import { processSyncQueue, updateAdminPassword, exportAllData, importAllData } from '@/lib/db';
+import { ChangePasswordDialog } from '@/components/ui/ChangePasswordDialog';
+import { DeveloperBrand } from '@/components/ui/DeveloperBrand';
 import {
   Sun,
   Moon,
@@ -13,13 +16,17 @@ import {
   Shield,
   Wifi,
   WifiOff,
+  HardDrive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminSettings() {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -51,20 +58,48 @@ export default function AdminSettings() {
     }
   };
 
-  const handleExportData = () => {
-    const data = localStorage.getItem('sms_backup');
-    if (!data) {
-      toast.error('No data to export');
-      return;
+  const handleBackup = async () => {
+    try {
+      const data = await exportAllData();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sms-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Backup created successfully');
+    } catch (error) {
+      toast.error('Failed to create backup');
     }
+  };
 
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sms-backup.json';
-    a.click();
-    toast.success('Data exported successfully');
+  const handleRestore = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const content = e.target?.result as string;
+      const result = await importAllData(content);
+      
+      if (result.success) {
+        toast.success('Data restored successfully! Please refresh the page.');
+      } else {
+        toast.error(result.error || 'Failed to restore data');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
+    if (!user) return false;
+    return await updateAdminPassword((user as any).id, currentPassword, newPassword);
   };
 
   return (
@@ -142,20 +177,48 @@ export default function AdminSettings() {
               <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
               {isSyncing ? 'Syncing...' : 'Sync Data Now'}
             </button>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={handleExportData}
-                className="btn-secondary flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Export Backup
-              </button>
-              <button className="btn-secondary flex items-center justify-center gap-2">
-                <Upload className="w-4 h-4" />
-                Import Backup
-              </button>
-            </div>
+        {/* Backup & Restore */}
+        <div className="card-elevated p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <HardDrive className="w-5 h-5 text-primary" />
+            Backup & Restore
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Create a backup of all your data or restore from a previous backup.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              onClick={handleBackup}
+              className="btn-secondary flex items-center justify-center gap-2 py-4"
+            >
+              <Download className="w-5 h-5" />
+              <div className="text-left">
+                <p className="font-medium">Create Backup</p>
+                <p className="text-xs text-muted-foreground">Export all data as JSON</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-secondary flex items-center justify-center gap-2 py-4"
+            >
+              <Upload className="w-5 h-5" />
+              <div className="text-left">
+                <p className="font-medium">Restore Backup</p>
+                <p className="text-xs text-muted-foreground">Import from JSON file</p>
+              </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleRestore}
+              className="hidden"
+            />
           </div>
         </div>
 
@@ -201,7 +264,10 @@ export default function AdminSettings() {
           </h3>
           
           <div className="space-y-4">
-            <button className="btn-secondary w-full">
+            <button 
+              onClick={() => setShowPasswordDialog(true)}
+              className="btn-primary w-full"
+            >
               Change Password
             </button>
             <button className="btn-secondary w-full">
@@ -211,19 +277,21 @@ export default function AdminSettings() {
         </div>
 
         {/* About */}
-        <div className="card-elevated p-6 text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+        <div className="card-elevated p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-2 text-center">
             Student Management System
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">Version 1.0.0</p>
-          <p className="text-sm text-muted-foreground">
-            Developed by <span className="font-semibold text-foreground">Salman Khan</span>
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Passion for Discipline, Sports & Technology.
-          </p>
+          <p className="text-sm text-muted-foreground mb-4 text-center">Version 1.0.0</p>
+          <DeveloperBrand />
         </div>
       </div>
+
+      <ChangePasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        onChangePassword={handlePasswordChange}
+        userType="admin"
+      />
     </AdminLayout>
   );
 }

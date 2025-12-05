@@ -382,3 +382,79 @@ export async function getStats(): Promise<{
     pendingRevenue,
   };
 }
+
+// Admin password change
+export async function updateAdminPassword(adminId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+  const database = await getDB();
+  const admin = await database.get('admins', adminId);
+  if (!admin || admin.password !== currentPassword) {
+    return false;
+  }
+  admin.password = newPassword;
+  await database.put('admins', admin);
+  return true;
+}
+
+// Student password change
+export async function updateStudentPassword(studentId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+  const database = await getDB();
+  const student = await database.get('students', studentId);
+  if (!student || student.password !== currentPassword) {
+    return false;
+  }
+  student.password = newPassword;
+  student.updatedAt = new Date().toISOString();
+  await database.put('students', student);
+  return true;
+}
+
+// Backup & Restore
+export async function exportAllData(): Promise<string> {
+  const database = await getDB();
+  const students = await database.getAll('students');
+  const admins = await database.getAll('admins');
+  const notifications = await database.getAll('notifications');
+  
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    students,
+    admins,
+    notifications,
+  };
+  
+  return JSON.stringify(data, null, 2);
+}
+
+export async function importAllData(jsonString: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const data = JSON.parse(jsonString);
+    
+    if (!data.version || !data.students) {
+      return { success: false, error: 'Invalid backup file format' };
+    }
+    
+    const database = await getDB();
+    
+    // Clear existing data
+    const tx = database.transaction(['students', 'notifications'], 'readwrite');
+    await tx.objectStore('students').clear();
+    await tx.objectStore('notifications').clear();
+    
+    // Import students
+    for (const student of data.students) {
+      await database.add('students', student);
+    }
+    
+    // Import notifications
+    if (data.notifications) {
+      for (const notification of data.notifications) {
+        await database.add('notifications', notification);
+      }
+    }
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'Failed to parse backup file' };
+  }
+}

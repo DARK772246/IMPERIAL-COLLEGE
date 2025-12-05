@@ -186,9 +186,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Footer */}
         <footer className="border-t border-border py-4 px-6">
-          <p className="text-center text-sm text-muted-foreground">
-            Developed by <span className="font-semibold text-foreground">Salman Khan</span> — Passion for Discipline, Sports & Technology.
-          </p>
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Developed by{' '}
+              <span className="relative inline-block">
+                <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] animate-gradient-x text-lg tracking-wide">
+                  SALMAN KHAN
+                </span>
+              </span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 opacity-80">
+              Passion for Discipline, Sports & Technology.
+            </p>
+          </div>
         </footer>
       </div>
     </div>

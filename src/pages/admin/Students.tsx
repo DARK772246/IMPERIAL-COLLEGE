@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { DataTable } from '@/components/ui/DataTable';
+import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { getAllStudents, deleteStudent, Student } from '@/lib/db';
 import {
   Search,
@@ -12,7 +13,6 @@ import {
   Edit,
   Trash2,
   Download,
-  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,6 +27,9 @@ export default function AdminStudents() {
   const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadStudents();
@@ -66,17 +69,27 @@ export default function AdminStudents() {
 
   const uniqueClasses = [...new Set(students.map((s) => s.class))].sort();
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
-      try {
-        await deleteStudent(id);
-        setStudents(students.filter((s) => s.id !== id));
-        toast.success('Student deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete student');
-      }
-    }
+  const handleDeleteClick = (student: Student) => {
+    setStudentToDelete(student);
+    setDeleteDialogOpen(true);
     setActiveDropdown(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!studentToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteStudent(studentToDelete.id);
+      setStudents(students.filter((s) => s.id !== studentToDelete.id));
+      toast.success('Student deleted successfully');
+      setDeleteDialogOpen(false);
+      setStudentToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete student');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const exportToCSV = () => {
@@ -220,7 +233,7 @@ export default function AdminStudents() {
                   Edit
                 </Link>
                 <button
-                  onClick={() => handleDelete(student.id)}
+                  onClick={() => handleDeleteClick(student)}
                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -363,6 +376,15 @@ export default function AdminStudents() {
           emptyMessage="No students found matching your criteria"
         />
       </div>
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete Student"
+        description={`Are you sure you want to delete ${studentToDelete?.fullName}? This action cannot be undone and all associated data will be permanently removed.`}
+        isLoading={isDeleting}
+      />
     </AdminLayout>
   );
 }

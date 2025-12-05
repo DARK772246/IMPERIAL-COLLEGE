@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { updateStudent, Student } from '@/lib/db';
+import { updateStudent, updateStudentPassword, Student } from '@/lib/db';
+import { ChangePasswordDialog } from '@/components/ui/ChangePasswordDialog';
+import { DeveloperBrand } from '@/components/ui/DeveloperBrand';
 import { Sun, Moon, User, Lock, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -14,6 +16,7 @@ export default function StudentSettings() {
   const [phone, setPhone] = useState(student?.phone || '');
   const [address, setAddress] = useState(student?.address || '');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   const handleUpdateProfile = async () => {
     if (!student?.id) return;
@@ -27,6 +30,11 @@ export default function StudentSettings() {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
+    if (!student?.id) return false;
+    return await updateStudentPassword(student.id, currentPassword, newPassword);
   };
 
   return (
@@ -129,9 +137,12 @@ export default function StudentSettings() {
             Security
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Contact the administration to change your password.
+            Keep your account secure by changing your password regularly.
           </p>
-          <button className="btn-secondary" disabled>
+          <button 
+            onClick={() => setShowPasswordDialog(true)}
+            className="btn-primary"
+          >
             Change Password
           </button>
         </div>
@@ -161,7 +172,19 @@ export default function StudentSettings() {
             </div>
           </div>
         </div>
+
+        {/* About */}
+        <div className="card-elevated p-6">
+          <DeveloperBrand />
+        </div>
       </div>
+
+      <ChangePasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        onChangePassword={handlePasswordChange}
+        userType="student"
+      />
     </StudentLayout>
   );
 }
