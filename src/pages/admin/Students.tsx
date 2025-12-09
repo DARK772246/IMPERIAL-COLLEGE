@@ -198,9 +198,10 @@ export default function AdminStudents() {
       header: '',
       className: 'w-12',
       render: (student: Student) => (
-        <div className="relative">
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               setActiveDropdown(activeDropdown === student.id ? null : student.id);
             }}
@@ -233,7 +234,11 @@ export default function AdminStudents() {
                   Edit
                 </Link>
                 <button
-                  onClick={() => handleDeleteClick(student)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteClick(student);
+                  }}
                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="w-4 h-4" />
