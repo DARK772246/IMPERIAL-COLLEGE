@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { processSyncQueue, updateAdminPassword, exportAllData, importAllData } from '@/lib/db';
 import { ChangePasswordDialog } from '@/components/ui/ChangePasswordDialog';
+import { AdminManagementDialog } from '@/components/ui/AdminManagementDialog';
 import { DeveloperBrand } from '@/components/ui/DeveloperBrand';
 import {
   Sun,
@@ -17,6 +18,7 @@ import {
   Wifi,
   WifiOff,
   HardDrive,
+  Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,6 +28,7 @@ export default function AdminSettings() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -278,9 +281,12 @@ export default function AdminSettings() {
                 <Shield className="w-4 h-4" />
                 Change Password
               </button>
-              <button className="btn-secondary flex items-center justify-center gap-2">
-                <Bell className="w-4 h-4" />
-                Manage Accounts
+              <button 
+                onClick={() => setShowAdminDialog(true)}
+                className="btn-secondary flex items-center justify-center gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Manage Admins
               </button>
             </div>
           </div>
@@ -301,6 +307,11 @@ export default function AdminSettings() {
         onOpenChange={setShowPasswordDialog}
         onChangePassword={handlePasswordChange}
         userType="admin"
+      />
+
+      <AdminManagementDialog
+        open={showAdminDialog}
+        onOpenChange={setShowAdminDialog}
       />
     </AdminLayout>
   );

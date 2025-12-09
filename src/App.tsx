@@ -15,6 +15,7 @@ import StudentLogin from "./pages/StudentLogin";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminStudents from "./pages/admin/Students";
 import AddStudent from "./pages/admin/AddStudent";
+import EditStudent from "./pages/admin/EditStudent";
 import ViewStudent from "./pages/admin/ViewStudent";
 import AdminFees from "./pages/admin/Fees";
 import AdminSettings from "./pages/admin/Settings";
@@ -62,7 +63,7 @@ function AppRoutes() {
       <Route path="/admin/students" element={<ProtectedRoute allowedType="admin"><AdminStudents /></ProtectedRoute>} />
       <Route path="/admin/students/add" element={<ProtectedRoute allowedType="admin"><AddStudent /></ProtectedRoute>} />
       <Route path="/admin/students/:id" element={<ProtectedRoute allowedType="admin"><ViewStudent /></ProtectedRoute>} />
-      <Route path="/admin/students/:id/edit" element={<ProtectedRoute allowedType="admin"><AddStudent /></ProtectedRoute>} />
+      <Route path="/admin/students/:id/edit" element={<ProtectedRoute allowedType="admin"><EditStudent /></ProtectedRoute>} />
       <Route path="/admin/fees" element={<ProtectedRoute allowedType="admin"><AdminFees /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute allowedType="admin"><AdminSettings /></ProtectedRoute>} />
       
