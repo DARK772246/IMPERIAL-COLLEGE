@@ -256,23 +256,33 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* Security */}
+        {/* Account Settings */}
         <div className="card-elevated p-6">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
-            Security
+            Account & Security
           </h3>
           
           <div className="space-y-4">
-            <button 
-              onClick={() => setShowPasswordDialog(true)}
-              className="btn-primary w-full"
-            >
-              Change Password
-            </button>
-            <button className="btn-secondary w-full">
-              Manage Admin Accounts
-            </button>
+            {/* Current Account Info */}
+            <div className="p-4 bg-secondary rounded-xl">
+              <p className="text-sm text-muted-foreground mb-1">Logged in as</p>
+              <p className="font-medium text-foreground">{user?.email || 'admin@school.com'}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button 
+                onClick={() => setShowPasswordDialog(true)}
+                className="btn-primary flex items-center justify-center gap-2"
+              >
+                <Shield className="w-4 h-4" />
+                Change Password
+              </button>
+              <button className="btn-secondary flex items-center justify-center gap-2">
+                <Bell className="w-4 h-4" />
+                Manage Accounts
+              </button>
+            </div>
           </div>
         </div>
 
