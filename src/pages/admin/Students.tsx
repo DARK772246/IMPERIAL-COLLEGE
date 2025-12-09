@@ -8,7 +8,6 @@ import {
   Search,
   Filter,
   UserPlus,
-  MoreHorizontal,
   Eye,
   Edit,
   Trash2,
@@ -26,7 +25,6 @@ export default function AdminStudents() {
   const [filterClass, setFilterClass] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -72,7 +70,6 @@ export default function AdminStudents() {
   const handleDeleteClick = (student: Student) => {
     setStudentToDelete(student);
     setDeleteDialogOpen(true);
-    setActiveDropdown(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -196,57 +193,43 @@ export default function AdminStudents() {
     {
       key: 'actions',
       header: '',
-      className: 'w-12',
+      className: 'w-16',
       render: (student: Student) => (
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="flex items-center gap-1"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <Link
+            to={`/admin/students/${student.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            title="View"
+          >
+            <Eye className="w-4 h-4" />
+          </Link>
+          <Link
+            to={`/admin/students/${student.id}/edit`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            title="Edit"
+          >
+            <Edit className="w-4 h-4" />
+          </Link>
           <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setActiveDropdown(activeDropdown === student.id ? null : student.id);
+              handleDeleteClick(student);
             }}
-            className="p-2 hover:bg-secondary rounded-lg"
+            className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+            title="Delete"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </button>
-          
-          {activeDropdown === student.id && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setActiveDropdown(null)}
-              />
-              <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-card border border-border rounded-lg shadow-lg py-1 animate-scale-in">
-                <Link
-                  to={`/admin/students/${student.id}`}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary"
-                  onClick={() => setActiveDropdown(null)}
-                >
-                  <Eye className="w-4 h-4" />
-                  View Profile
-                </Link>
-                <Link
-                  to={`/admin/students/${student.id}/edit`}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary"
-                  onClick={() => setActiveDropdown(null)}
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </Link>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDeleteClick(student);
-                  }}
-                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
-            </>
-          )}
         </div>
       ),
     },

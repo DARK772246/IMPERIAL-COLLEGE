@@ -294,6 +294,58 @@ export async function getAdminByEmail(email: string): Promise<Admin | undefined>
   return database.getFromIndex('admins', 'by-email', email);
 }
 
+export async function getAllAdmins(): Promise<Admin[]> {
+  const database = await getDB();
+  return database.getAll('admins');
+}
+
+export async function addAdmin(admin: Omit<Admin, 'id'>): Promise<Admin> {
+  const database = await getDB();
+  
+  // Check if email already exists
+  const existing = await database.getFromIndex('admins', 'by-email', admin.email);
+  if (existing) {
+    throw new Error('An admin with this email already exists');
+  }
+  
+  const newAdmin: Admin = {
+    ...admin,
+    id: `admin-${Date.now()}`,
+  };
+  await database.add('admins', newAdmin);
+  return newAdmin;
+}
+
+export async function updateAdmin(id: string, updates: Partial<Omit<Admin, 'id' | 'password'>>): Promise<Admin | undefined> {
+  const database = await getDB();
+  const existing = await database.get('admins', id);
+  if (!existing) return undefined;
+
+  // Check if new email already exists (if email is being updated)
+  if (updates.email && updates.email !== existing.email) {
+    const emailExists = await database.getFromIndex('admins', 'by-email', updates.email);
+    if (emailExists) {
+      throw new Error('An admin with this email already exists');
+    }
+  }
+
+  const updated: Admin = {
+    ...existing,
+    ...updates,
+  };
+  await database.put('admins', updated);
+  return updated;
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  const database = await getDB();
+  const admins = await database.getAll('admins');
+  if (admins.length <= 1) {
+    throw new Error('Cannot delete the last admin');
+  }
+  await database.delete('admins', id);
+}
+
 // Notification operations
 export async function getNotificationsByStudent(studentId: string): Promise<Notification[]> {
   const database = await getDB();
